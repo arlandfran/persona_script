@@ -1,46 +1,38 @@
 import sys
 import os
-
-from pandas import DataFrame
-
 from datetime import date
-
+from pandas import DataFrame
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 
 today = date.today()
-
 date = today.strftime('/%m/%Y')
 
-options = Options()
-
 platform = sys.platform
-
 if platform == 'win32':
     profile_path = 'C:\\Users\\AVTORRES\\AppData\\Local\\Google\\Chrome\\User Data'
     path = os.getcwd() + '\\chromedriver.exe'
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
 else:
     profile_path = '/Users/arlandtorres/Library/Application Support/Google/Chrome/'
     path = os.getcwd() + '/chromedriver'
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
 
+options = Options()
 options.add_argument('user-data-dir=' + profile_path)
 
 driver = webdriver.Chrome(path, options=options)
-
-driver.implicitly_wait(3)
-
+driver.implicitly_wait(4)
 driver.get('https://aka.ms/personaeu')
-
 driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
 
 days = []
 hours = []
 start = []
 end = []
-# reminder = []
 csv = {
     'Subject': [],
     'Start Date': [],
@@ -69,9 +61,10 @@ def scrape():
             hours.append('WORK - ' + shift_hours)
             x += 1
         except NoSuchElementException:
-            start.append('OFF')
-            end.append('OFF')
-            hours.append('OFF')
+            days.pop()
+            # start.append('OFF')
+            # end.append('OFF')
+            # hours.append('OFF')
             x += 1
 
 def go_next():
@@ -86,33 +79,21 @@ def check_if_working():
         return False
 
 def create_csv():
-    df = DataFrame(csv, columns= ['Subject', 'Start Date', 'Start Time', 'End Date', 'End Time', 'Reminder Date', 'Reminder Time'])
-    df.to_csv(os.getcwd(), index=None, header=True)
-    print(df)
+    df = DataFrame(csv)
+    df.to_csv(desktop + '/rota.csv', index=None, header=True)
     
 working = check_if_working()
-
 while working == True:
     scrape()
     go_next()
     working = check_if_working()
-
 driver.quit()
 
 days = [s.replace('\n', '') for s in days]
-
 csv['Subject'] = hours
 csv['Start Date'] = days
 csv['Start Time'] = start
 csv['End Date'] = days
 csv['End Time'] = end
 csv['Reminder Date'] = days
-# csv['Reminder Time'] = reminder
-
-# print(len(csv['Subject']), len(csv['Start Date']), len(csv['Start Time']), len(csv['End Date']), len(csv['End Time']), len(csv['Reminder Date']))
-
-df = DataFrame.from_dict(csv, orient='columns')
-print(df)
-
-# create_csv()
-
+create_csv()
