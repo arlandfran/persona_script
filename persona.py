@@ -8,9 +8,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
-today = date.today()
-date = today.strftime('/%m/%Y')
-
 platform = sys.platform
 if platform == 'win32':
     profile_path = 'C:\\Users\\AVTORRES\\AppData\\Local\\Google\\Chrome\\User Data'
@@ -23,9 +20,10 @@ else:
 
 options = Options()
 options.add_argument('user-data-dir=' + profile_path)
+# options.add_argument('headless')
 
 driver = webdriver.Chrome(path, options=options)
-driver.implicitly_wait(4)
+driver.implicitly_wait(5)
 driver.get('https://aka.ms/personaeu')
 driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
 
@@ -42,6 +40,18 @@ csv = {
     'Reminder Date': [],
 }
 
+today = date.today()
+month = today.strftime('%m')
+year = today.strftime('/%Y')
+date = month + year
+
+def incr_month():
+    month = today.strftime('%m')
+    x = int(month)
+    x += 1
+    month = str(x)
+    return '/' + month
+
 def scrape():
     x = 2
     while x < 9:
@@ -49,7 +59,14 @@ def scrape():
             shift_days = driver.find_element_by_xpath(
                 f'//*[@id="headercontainer-1037-targetEl"]/div[{x}]/div/span/span'
             ).text
-            days.append(shift_days[:2] + date)
+            if len(days) < 1:
+                days.append(shift_days[:2] + date)
+            elif shift_days[:2] > days[-1][:2]:
+                days.append(shift_days[:2] + date)
+            else:
+                month = incr_month()
+                days.append(shift_days[:2] + month + year)
+                date = month + year  
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -97,3 +114,12 @@ csv['End Date'] = days
 csv['End Time'] = end
 csv['Reminder Date'] = days
 create_csv()
+
+# if len(days) < 1:
+#                 days.append(shift_days[:2] + date)
+#             elif shift_days[:2] > days[-1][:2]:
+#                 days.append(shift_days[:2] + date)
+#             else:
+#                 month = incr_month()
+#                 days.append(shift_days[:2] + month + year)
+#                 date = month + year  
