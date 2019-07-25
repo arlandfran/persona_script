@@ -1,9 +1,11 @@
 import sys
 import os
+
+from pandas import DataFrame
+
 from datetime import date
 
 from selenium import webdriver
-
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
@@ -11,7 +13,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 today = date.today()
 
-month = today.strftime('%m')
+date = today.strftime('/%m/%Y')
 
 options = Options()
 
@@ -34,36 +36,83 @@ driver.get('https://aka.ms/personaeu')
 
 driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
 
-# days = []
+days = []
+hours = []
+start = []
+end = []
+# reminder = []
+csv = {
+    'Subject': [],
+    'Start Date': [],
+    'Start Time': [],
+    'End Date': [],
+    'End Time': [],
+    'Reminder Date': [],
+}
 
-# schedule = []
+def scrape():
+    x = 2
+    while x < 9:
+        try:
+            shift_days = driver.find_element_by_xpath(
+                f'//*[@id="headercontainer-1037-targetEl"]/div[{x}]/div/span/span'
+            ).text
+            days.append(shift_days[:2] + date)
+            shift_times = driver.find_element_by_xpath(
+                f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
+            ).text
+            start.append(shift_times[:5])
+            end.append(shift_times[-5:])
+            shift_hours = driver.find_element_by_xpath(
+                f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div[2]/div'
+            ).text
+            hours.append('WORK - ' + shift_hours)
+            x += 1
+        except NoSuchElementException:
+            start.append('OFF')
+            end.append('OFF')
+            hours.append('OFF')
+            x += 1
 
-# hours = []
+def go_next():
+    action = ActionChains(driver)
+    action.click(driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
+    action.perform()
 
-# x = 2
+def check_if_working():
+    if driver.find_element_by_xpath('//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]').text != '0.00 hrs':
+        return True
+    else:
+        return False
 
-# while x < 9:
-#     try:
-#         shift_days = driver.find_element_by_xpath(
-#             f'//*[@id="headercontainer-1037-targetEl"]/div[{x}]/div/span/span'
-#         ).text
-#         days.append(shift_days)
-#         shift_times = driver.find_element_by_xpath(
-#             f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
-#         ).text
-#         schedule.append(shift_times)
-#         shift_hours = driver.find_element_by_xpath(
-#             f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div[2]/div'
-#         ).text
-#         hours.append(shift_hours)
-#         x += 1
-#     except NoSuchElementException:
-#         schedule.append('OFF')
-#         hours.append('OFF')
-#         x += 1
+def create_csv():
+    df = DataFrame(csv, columns= ['Subject', 'Start Date', 'Start Time', 'End Date', 'End Time', 'Reminder Date', 'Reminder Time'])
+    df.to_csv(os.getcwd(), index=None, header=True)
+    print(df)
+    
+working = check_if_working()
 
-action = ActionChains(driver)
-action.click(driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
-action.perform()
+while working == True:
+    scrape()
+    go_next()
+    working = check_if_working()
 
-# driver.quit()
+driver.quit()
+
+days = [s.replace('\n', '') for s in days]
+
+csv['Subject'] = hours
+csv['Start Date'] = days
+csv['Start Time'] = start
+csv['End Date'] = days
+csv['End Time'] = end
+csv['Reminder Date'] = days
+# csv['Reminder Time'] = reminder
+
+# print(len(csv['Subject']), len(csv['Start Date']), len(csv['Start Time']), len(csv['End Date']), len(csv['End Time']), len(csv['Reminder Date']))
+
+df = DataFrame.from_dict(csv, orient='columns')
+print(df)
+
+# create_csv()
+
