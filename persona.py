@@ -1,8 +1,12 @@
+import sys
 import os
 from datetime import date
 
 from selenium import webdriver
+
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 
 today = date.today()
@@ -11,27 +15,32 @@ month = today.strftime('%m')
 
 options = Options()
 
-profile_path = '/Users/arlandtorres/Library/Application Support/Google/Chrome/'
+platform = sys.platform
+
+if platform == 'win32':
+    profile_path = 'C:\\Users\\AVTORRES\\AppData\\Local\\Google\\Chrome\\User Data'
+    path = os.getcwd() + '\\chromedriver.exe'
+else:
+    profile_path = '/Users/arlandtorres/Library/Application Support/Google/Chrome/'
+    path = os.getcwd() + '/chromedriver'
 
 options.add_argument('user-data-dir=' + profile_path)
 
-path = os.getcwd() + '/chromedriver'
-
 driver = webdriver.Chrome(path, options=options)
 
-driver.implicitly_wait(2)
+driver.implicitly_wait(3)
 
 driver.get('https://aka.ms/personaeu')
 
 driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
 
-days = []
+# days = []
 
-schedule = []
+# schedule = []
 
-hours = []
+# hours = []
 
-x = 2
+# x = 2
 
 # while x < 9:
 #     try:
@@ -53,4 +62,8 @@ x = 2
 #         hours.append('OFF')
 #         x += 1
 
-driver.find_element_by_xpath('//*[@id="button-1029-btnEl"]').click()
+action = ActionChains(driver)
+action.click(driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
+action.perform()
+
+# driver.quit()
