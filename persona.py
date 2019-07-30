@@ -8,25 +8,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
-platform = sys.platform
-if platform == 'win32':
-    profile_path = 'C:\\Users\\AVTORRES\\AppData\\Local\\Google\\Chrome\\User Data'
-    path = os.getcwd() + '\\chromedriver.exe'
-    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
-else:
-    profile_path = '/Users/arlandtorres/Library/Application Support/Google/Chrome/'
-    path = os.getcwd() + '/chromedriver'
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-
-options = Options()
-options.add_argument('user-data-dir=' + profile_path)
-# options.add_argument('headless')
-
-driver = webdriver.Chrome(path, options=options)
-driver.implicitly_wait(5)
-driver.get('https://aka.ms/personaeu')
-driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
-
+today = date.today()
 days = []
 hours = []
 start = []
@@ -40,10 +22,10 @@ csv = {
     'Reminder Date': [],
 }
 
-today = date.today()
-month = today.strftime('%m')
-year = today.strftime('/%Y')
-date = month + year
+# month = today.strftime('%m')
+# year = today.strftime('/%Y')
+# date = month + year
+
 
 def incr_month():
     month = today.strftime('%m')
@@ -52,21 +34,25 @@ def incr_month():
     month = str(x)
     return '/' + month
 
-def scrape():
+
+def scrape(month):
+    # self.month = month
     x = 2
+    # date = today.strftime('%m') + today.strftime('%Y')
+    year = today.strftime('/%Y')
     while x < 9:
         try:
             shift_days = driver.find_element_by_xpath(
                 f'//*[@id="headercontainer-1037-targetEl"]/div[{x}]/div/span/span'
             ).text
             if len(days) < 1:
-                days.append(shift_days[:2] + date)
+                days.append(shift_days[:2] + month + year)
             elif shift_days[:2] > days[-1][:2]:
-                days.append(shift_days[:2] + date)
+                days.append(shift_days[:2] + month + year)
             else:
                 month = incr_month()
                 days.append(shift_days[:2] + month + year)
-                date = month + year  
+                date = month + year
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -83,25 +69,57 @@ def scrape():
             # end.append('OFF')
             # hours.append('OFF')
             x += 1
+    return month
+
 
 def go_next():
     action = ActionChains(driver)
-    action.click(driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
+    action.click(
+        driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
     action.perform()
 
+
 def check_if_working():
-    if driver.find_element_by_xpath('//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]').text != '0.00 hrs':
-        return True
-    else:
+    # if driver.find_element_by_xpath(
+    #         '//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]'
+    # ).text != '0.00 hrs':
+    #     return True
+    if driver.find_element_by_xpath(
+            '//*[@id="panel-1032-innerCt"]/div/div[4]/span/div/div'
+    ).text == 'Schedules have not yet been posted.':
         return False
+    else:
+        return True
+
 
 def create_csv():
     df = DataFrame(csv)
     df.to_csv(desktop + '/rota.csv', index=None, header=True)
-    
+
+
+platform = sys.platform
+if platform == 'win32':
+    profile_path = 'C:\\Users\\AVTORRES\\AppData\\Local\\Google\\Chrome\\User Data'
+    path = os.getcwd() + '\\chromedriver.exe'
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+else:
+    profile_path = '/Users/arlandtorres/Library/Application Support/Google/Chrome/'
+    path = os.getcwd() + '/chromedriver'
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+
+options = Options()
+options.add_argument('user-data-dir=' + profile_path)
+# options.add_argument('headless')
+
+driver = webdriver.Chrome(path, options=options)
+driver.implicitly_wait(2)
+driver.get('https://aka.ms/personaeu')
+driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+
 working = check_if_working()
+month = str(today.strftime('/%m'))
 while working == True:
-    scrape()
+    month = scrape(month)
     go_next()
     working = check_if_working()
 driver.quit()
@@ -122,4 +140,4 @@ create_csv()
 #             else:
 #                 month = incr_month()
 #                 days.append(shift_days[:2] + month + year)
-#                 date = month + year  
+#                 date = month + year
