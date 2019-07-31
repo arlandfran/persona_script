@@ -22,10 +22,6 @@ csv = {
     'Reminder Date': [],
 }
 
-# month = today.strftime('%m')
-# year = today.strftime('/%Y')
-# date = month + year
-
 
 def incr_month():
     month = today.strftime('%m')
@@ -36,9 +32,7 @@ def incr_month():
 
 
 def scrape(month):
-    # self.month = month
     x = 2
-    # date = today.strftime('%m') + today.strftime('%Y')
     year = today.strftime('/%Y')
     while x < 9:
         try:
@@ -52,7 +46,6 @@ def scrape(month):
             else:
                 month = incr_month()
                 days.append(shift_days[:2] + month + year)
-                # date = month + year
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -65,9 +58,6 @@ def scrape(month):
             x += 1
         except NoSuchElementException:
             days.pop()
-            # start.append('OFF')
-            # end.append('OFF')
-            # hours.append('OFF')
             x += 1
     return month
 
@@ -80,10 +70,6 @@ def go_next():
 
 
 def check_if_working():
-    # if driver.find_element_by_xpath(
-    #         '//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]'
-    # ).text != '0.00 hrs':
-    #     return True
     if driver.find_element_by_xpath(
             '//*[@id="panel-1032-innerCt"]/div/div[4]/span/div/div'
     ).text == 'Schedules have not yet been posted.' or driver.find_element_by_xpath(
@@ -112,7 +98,7 @@ else:
 
 options = Options()
 options.add_argument('user-data-dir=' + profile_path)
-# options.add_argument('headless')
+options.add_argument('headless')
 
 driver = webdriver.Chrome(path, options=options)
 driver.implicitly_wait(2)
@@ -135,12 +121,3 @@ csv['End Date'] = days
 csv['End Time'] = end
 csv['Reminder Date'] = days
 create_csv()
-
-# if len(days) < 1:
-#                 days.append(shift_days[:2] + date)
-#             elif shift_days[:2] > days[-1][:2]:
-#                 days.append(shift_days[:2] + date)
-#             else:
-#                 month = incr_month()
-#                 days.append(shift_days[:2] + month + year)
-#                 date = month + year
