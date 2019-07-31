@@ -52,7 +52,7 @@ def scrape(month):
             else:
                 month = incr_month()
                 days.append(shift_days[:2] + month + year)
-                date = month + year
+                # date = month + year
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -86,7 +86,9 @@ def check_if_working():
     #     return True
     if driver.find_element_by_xpath(
             '//*[@id="panel-1032-innerCt"]/div/div[4]/span/div/div'
-    ).text == 'Schedules have not yet been posted.':
+    ).text == 'Schedules have not yet been posted.' or driver.find_element_by_xpath(
+            '//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]'
+    ).text == '0.00 hrs':
         return False
     else:
         return True
@@ -95,6 +97,7 @@ def check_if_working():
 def create_csv():
     df = DataFrame(csv)
     df.to_csv(desktop + '/rota.csv', index=None, header=True)
+    print(df)
 
 
 platform = sys.platform
