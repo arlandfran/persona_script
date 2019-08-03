@@ -1,6 +1,7 @@
 import sys
 import os
 from datetime import date
+from getpass import getuser
 from pandas import DataFrame
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -87,12 +88,13 @@ def create_csv():
 
 
 platform = sys.platform
+user = getuser()
 if platform == 'win32':
-    profile_path = 'C:\\Users\\AVTORRES\\AppData\\Local\\Google\\Chrome\\User Data'
+    profile_path = f'C:\\Users\\{user}\\AppData\\Local\\Google\\Chrome\\User Data'
     path = os.getcwd() + '\\chromedriver.exe'
     desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
 else:
-    profile_path = '/Users/arlandtorres/Library/Application Support/Google/Chrome/'
+    profile_path = f'/Users/{user}/Library/Application Support/Google/Chrome/'
     path = os.getcwd() + '/chromedriver'
     desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
 
@@ -102,8 +104,11 @@ options.add_argument('headless')
 
 driver = webdriver.Chrome(path, options=options)
 driver.implicitly_wait(2)
-driver.get('https://aka.ms/personaeu')
-driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+try:
+    driver.get('https://aka.ms/personaeu')
+    driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+except:
+    print('Could not access persona.')
 
 working = check_if_working()
 month = str(today.strftime('/%m'))
