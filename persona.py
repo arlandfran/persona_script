@@ -23,9 +23,11 @@ else:
 
 options = Options()
 options.add_argument('user-data-dir=' + profile_path)
+# options.add_argument('headless')
 
 driver = webdriver.Chrome(path, options=options)
 driver.implicitly_wait(4)
+print('accessing persona...')
 driver.get('https://aka.ms/personaeu')
 driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
 
@@ -74,17 +76,23 @@ def go_next():
 
 def check_if_working():
     if driver.find_element_by_xpath('//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]').text != '0.00 hrs':
+        print('you\'re working next week buddy...')
         return True
     else:
+        print('you have nothing scheduled next week...')
         return False
 
 def create_csv():
     df = DataFrame(csv)
-    df.to_csv(desktop + '/rota.csv', index=None, header=True)
+    # df.to_csv(desktop + '/rota.csv', index=None, header=True)
+    print('here is your schedule :)')
+    print(df)
     
 working = check_if_working()
 while working == True:
+    print('scraping data...')
     scrape()
+    print('checking next week...')
     go_next()
     working = check_if_working()
 driver.quit()
