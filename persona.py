@@ -102,8 +102,8 @@ csv = {
 
 profile_path, path, desktop = check_platform()
 options = Options()
-options.add_argument('user-data-dir=' + profile_path)
-# options.add_argument('headless')
+options.add_argument('user-data-dir=' + profile_path) # use custom chrome profile with 'keep signed in' on persona saved 
+options.headless = False # True = enables headless mode
 driver = webdriver.Chrome(path, options=options)
 driver.implicitly_wait(2)
 try:
@@ -120,5 +120,5 @@ while working == True:
     time.sleep(1)
     working = check_if_working()
 driver.quit()
-days = [s.replace('\n', '') for s in days]
+days = [s.replace('\n', '') for s in days] # removes the '\n' suffix from the dates
 create_csv()
