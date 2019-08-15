@@ -9,6 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from timeit import default_timer as timer
 
 def check_platform():
     platform = sys.platform
@@ -86,6 +87,7 @@ def create_csv():
     df.to_csv(desktop + '/rota.csv', index=None, header=True)
     print(df)
 
+t_start = timer()
 today = date.today()
 days = []
 hours = []
@@ -122,3 +124,5 @@ while working == True:
 driver.quit()
 days = [s.replace('\n', '') for s in days] # removes the '\n' suffix from the dates
 create_csv()
+t_end = timer()
+print('\nRan script in ' + str(t_end - t_start) + 's')
