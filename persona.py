@@ -53,7 +53,7 @@ def scrape(month):
             shift_hours = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div[2]/div'
             ).text
-            hours.append('WORK - ' + shift_hours)
+            hours.append('Work - ' + shift_hours[:-3] + 'hours')
             x += 1
         except NoSuchElementException:
             days.pop()
@@ -82,13 +82,13 @@ def create_csv():
     csv['Start Time'] = start
     csv['End Date'] = days
     csv['End Time'] = end
-    csv['Reminder Date'] = days
     df = DataFrame(csv)
     df.to_csv(desktop + '/rota.csv', index=None, header=True)
     print(df)
 
 t_start = timer()
 today = date.today()
+subject = []
 days = []
 hours = []
 start = []
@@ -99,7 +99,6 @@ csv = {
     'Start Time': [],
     'End Date': [],
     'End Time': [],
-    'Reminder Date': [],
 }
 
 profile_path, path, desktop = check_platform()
