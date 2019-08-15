@@ -108,9 +108,11 @@ options.add_argument('user-data-dir=' + profile_path)
 
 driver = webdriver.Chrome(path, options=options)
 driver.implicitly_wait(2)
-driver.maximize_window()
-driver.get('https://aka.ms/personaeu')
-driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+try:
+    driver.get('https://aka.ms/personaeu')
+    driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+except:
+    print('Could not access persona.')
 
 working = check_if_working()
 month = str(today.strftime('/%m'))
