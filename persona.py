@@ -3,9 +3,10 @@ import sys
 import os
 from datetime import date
 from getpass import getuser
+from loguru import logger
 from pandas import DataFrame
-from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver import Chrome
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
@@ -105,23 +106,22 @@ profile_path, path, desktop = check_platform()
 options = Options()
 options.add_argument('user-data-dir=' + profile_path) # use custom chrome profile with 'keep signed in' on persona saved 
 options.headless = False # True = enables headless mode
-driver = webdriver.Chrome(path, options=options)
-driver.implicitly_wait(2)
-try:
-    driver.get('https://aka.ms/personaeu')
-    driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
-except:
-    sys.exit('Could not access persona, script exited.')
+with Chrome(path, options=options) as driver:
+    driver.implicitly_wait(2)
+    try:
+        driver.get('https://aka.ms/personaeu')
+        driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+    except:
+        sys.exit('Could not access persona, script exited.')
 
-working = check_if_working()
-month = str(today.strftime('/%m'))
-while working == True:
-    month = scrape(month)
-    go_next()
-    time.sleep(1)
     working = check_if_working()
-driver.quit()
+    month = str(today.strftime('/%m'))
+    while working == True:
+        month = scrape(month)
+        go_next()
+        time.sleep(1)
+        working = check_if_working()
 days = [s.replace('\n', '') for s in days] # removes the '\n' suffix from the dates
 create_csv()
 t_end = timer()
-print('\nRan script in ' + str(t_end - t_start) + 's')
+logger.debug('\nRan script in ' + str(t_end - t_start) + 's')
