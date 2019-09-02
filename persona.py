@@ -31,8 +31,13 @@ def incr_month():
     month = today.strftime('%m')
     x = int(month)
     x += 1
-    month = '0' + str(x)
+    month = str(x)
     return '/' + month
+
+def strip_chars(date):
+    sep = '\n'
+    integer = int(date.split(sep, 1)[0])
+    return integer
 
 def scrape(month):
     logger.debug('Scraping data')
@@ -40,14 +45,16 @@ def scrape(month):
     year = today.strftime('/%Y')
     while x < 9:
         try:
-            shift_days = driver.find_element_by_xpath(
+            shift_date = driver.find_element_by_xpath(
                 f'//*[@id="headercontainer-1037-targetEl"]/div[{x}]/div/span/span'
             ).text
-            if len(days) < 1 or shift_days[:2] > days[-1][:2]:
-                days.append(shift_days[:2] + month + year)
+            shift_day = strip_chars(shift_date)
+            if len(days) < 1 or shift_day > int_days[-1]:
+                int_days.append(shift_day)
+                days.append(str(shift_day) + month + year)
             else:
                 month = incr_month()
-                days.append(shift_days[:2] + month + year)
+                days.append(str(shift_day) + month + year)
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -98,6 +105,9 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
 today = date.today()
+
+int_days = []
+
 subject = []
 days = []
 hours = []
@@ -133,7 +143,6 @@ with Chrome(path, options=options) as driver:
         go_next()
         time.sleep(1)
         working = check_if_working()
-days = [s.replace('\n', '') for s in days] # removes the '\n' suffix from the dates
 create_csv()
 t_end = timer()
 logger.debug('\nRan script in ' + str(t_end - t_start) + 's')
