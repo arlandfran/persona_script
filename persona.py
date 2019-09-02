@@ -1,4 +1,5 @@
 import time
+import tkinter as tk
 import sys
 import os
 from datetime import date
@@ -34,6 +35,7 @@ def incr_month():
     return '/' + month
 
 def scrape(month):
+    logger.debug('Scraping data')
     x = 2
     year = today.strftime('/%Y')
     while x < 9:
@@ -66,6 +68,7 @@ def go_next():
     action.click(
         driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
     action.perform()
+    logger.debug('Accessing next page')
 
 def check_if_working():
     if driver.find_element_by_xpath(
@@ -73,8 +76,10 @@ def check_if_working():
     ).text == 'Schedules have not yet been posted.' or driver.find_element_by_xpath(
             '//*[@id="gridview-1046-body"]/tr[1]/td/div/div[3]'
     ).text == '0.00 hrs':
+        logger.debug('No data found')
         return False
     else:
+        logger.debug('Data found')
         return True
 
 def create_csv():
@@ -87,7 +92,11 @@ def create_csv():
     df.to_csv(desktop + '/rota.csv', index=None, header=True)
     print(df)
 
-t_start = timer()
+root = tk.Tk()
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
 today = date.today()
 subject = []
 days = []
@@ -104,12 +113,15 @@ csv = {
 
 profile_path, path, desktop = check_platform()
 options = Options()
+options.add_argument(f'window-size={screen_width}x{screen_height}')
 options.add_argument('user-data-dir=' + profile_path) # use custom chrome profile with 'keep signed in' on persona saved 
-options.headless = False # True = enables headless mode
+options.headless = True
 with Chrome(path, options=options) as driver:
+    t_start = timer()
     driver.implicitly_wait(2)
     try:
         driver.get('https://aka.ms/personaeu')
+        logger.debug('Accessing Persona')
         driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
     except:
         sys.exit('Could not access persona, script exited.')
