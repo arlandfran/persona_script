@@ -1,9 +1,12 @@
+# TODO: implement icalendar module to ouput .ics file instead of csv files
+
 import time
 import tkinter as tk
 import sys
 import os
-from datetime import date
+from datetime import datetime, date
 from getpass import getuser
+from icalendar import Calendar, Event
 from loguru import logger
 from pandas import DataFrame
 from selenium.common.exceptions import NoSuchElementException
@@ -66,6 +69,7 @@ def scrape(month):
             hours.append('Work - ' + shift_hours[:-3] + 'hours')
             x += 1
         except NoSuchElementException:
+            int_days.pop()
             days.pop()
             x += 1
     return month
@@ -89,15 +93,36 @@ def check_if_working():
         logger.debug('Data found')
         return True
 
-def create_csv():
+def export_data(month):
     csv['Subject'] = hours
-    csv['Start Date'] = days
-    csv['Start Time'] = start
-    csv['End Date'] = days
-    csv['End Time'] = end
+    # csv['Start Date'] = days
+    # csv['Start Time'] = start
+    # csv['End Date'] = days
+    # csv['End Time'] = end
     df = DataFrame(csv)
-    df.to_csv(desktop + '/rota.csv', index=None, header=True)
+    # df.to_csv(desktop + '/rota.csv', index=None, header=True)
     print(df)
+
+    cal = Calendar()
+    # month = int(today.strftime('%m'))
+    year = int(today.strftime('%Y'))
+    month = int(month.strip('/'))
+
+    data = list(df['Subject'])
+
+    i = 0
+    for column in data:
+        event = Event()
+        event.add('summary', df['Subject'][i])
+        event.add('dtstart', datetime(year, month, int_days[i], int(start[i][:2]), int(start[i][3:])))
+        event.add('dtend', datetime(year, month, int_days[i], int(end[i][:2]), int(end[i][3:])))
+        event.add('location', 'Microsoft Store - Oxford Circus, 253-259 Regent St, Mayfair, London W1B 2ER, UK')
+        cal.add_component(event)
+        i += 1
+
+    with open(os.path.join(desktop, 'persona_calendar.ics'), 'wb') as f:
+        f.write(cal.to_ical())
+
 
 root = tk.Tk()
 
@@ -115,10 +140,10 @@ start = []
 end = []
 csv = {
     'Subject': [],
-    'Start Date': [],
-    'Start Time': [],
-    'End Date': [],
-    'End Time': [],
+    # 'Start Date': [],
+    # 'Start Time': [],
+    # 'End Date': [],
+    # 'End Time': [],
 }
 
 profile_path, path, desktop = check_platform()
@@ -143,6 +168,7 @@ with Chrome(path, options=options) as driver:
         go_next()
         time.sleep(1)
         working = check_if_working()
-create_csv()
+export_data(month)
+
 t_end = timer()
 logger.debug('\nRan script in ' + str(t_end - t_start) + 's')
