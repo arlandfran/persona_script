@@ -9,6 +9,7 @@ from datetime import datetime, date
 from getpass import getuser
 from icalendar import Calendar, Event
 from loguru import logger
+from PyInquirer import prompt
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.action_chains import ActionChains
@@ -117,9 +118,55 @@ def export_data(month):
         i += 1
 
     temp_dir = mkdtemp()
-    with open(os.path.join(desktop, 'persona_calendar.ics'), 'wb') as f:
+    file_path = os.path.join(temp_dir, 'persona_calendar.ics')
+    with open(file_path, 'wb') as f:
         f.write(cal.to_ical())
-    logger.debug('Calendar exported to Desktop')
+    return file_path
+
+
+def outlook_import(path):
+    driver.get('https://www.outlook.com/calendar')
+    driver.find_element_by_xpath(
+        '//*[@id="app"]/div/div[2]/div[1]/div/div[1]/div[3]/div/div[1]/button[2]').click()
+    driver.find_element_by_xpath('//*[@id="Fromfile"]').click()
+    driver.find_element_by_xpath(
+        '//input[@type="file"]').send_keys(path)
+    driver.find_element_by_xpath(
+        '/html/body/div[6]/div/div/div/div[2]/div[2]/div/div[2]/div/div[2]/div[6]/button').click()
+    logger.debug('Calendar imported into Outlook')
+
+
+def gcalendar_import(path):
+    driver.get('https://calendar.google.com')
+    driver.find_element_by_xpath(
+        '/html/body/div[2]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div[4]/div/div/div/div/div[4]/div[2]/div/div[2]').click()
+    driver.find_element_by_xpath('/html/body/div[21]/div/div/span[5]').click()
+    driver.find_element_by_xpath(
+        '//*[@id="YPCqFe"]/div/div/div/div[1]/div[1]/div/form/label/input').send_keys(path)
+    driver.find_element_by_xpath(
+        '//*[@id="YPCqFe"]/div/div/div/div[1]/div[3]/div[2]').click()
+    logger.debug('Calendar imported into Google Calendar')
+
+
+def import_prompt():
+    question = [
+        {
+            'type': 'list',
+            'message': 'Select calendar:',
+            'name': 'Calendar',
+            'choices': [
+                {
+                    'name': 'Outlook'
+                },
+                {
+                    'name': 'Google Calendar'
+                },
+            ]
+        }
+    ]
+
+    answer = prompt(question)
+    return answer
 
 
 root = tk.Tk()
@@ -136,15 +183,15 @@ csv = {'summary': []}
 
 profile_path, path, desktop = check_platform()
 options = Options()
-options.add_argument("--start-maximized")
+# options.add_argument("--start-maximized")
 options.add_argument(f'window-size={screen_width}x{screen_height}')
 # use custom chrome profile with 'keep signed in' on persona saved
 options.add_argument('user-data-dir=' + profile_path)
-options.headless = False
-
+options.headless = True
+selection = import_prompt()
 with Chrome(path, options=options) as driver:
     t_start = timer()
-    driver.implicitly_wait(2)
+    driver.implicitly_wait(4)
     try:
         driver.get('https://aka.ms/personaeu')
         logger.debug('Accessing Persona')
@@ -154,21 +201,16 @@ with Chrome(path, options=options) as driver:
 
     working = check_if_working()
     month = str(today.strftime('/%m'))
-    while working == True:
+    while working:
         month = scrape(month)
         go_next()
         time.sleep(1)
         working = check_if_working()
-    export_data(month)
-    driver.get('https://www.outlook.com/calendar')
-    driver.find_element_by_xpath(
-        '//*[@id="app"]/div/div[2]/div[1]/div/div[1]/div[3]/div/div[1]/button[2]').click()
-    driver.find_element_by_xpath('//*[@id="Fromfile"]').click()
-    driver.find_element_by_xpath(
-        '//input[@type="file"]').send_keys(desktop + '\\persona_calendar.ics')
-    driver.find_element_by_xpath(
-        '//*[@id="id__212"]').click()
-    logger.debug('Calendar imported into Outlook')
+    file_path = export_data(month)
+    if selection.get('Calendar') == 'Outlook':
+        outlook_import(file_path)
+    elif selection.get('Calendar') == 'Google Calendar':
+        gcalendar_import(file_path)
 
 t_end = timer()
-logger.debug('\nRan script in ' + str(t_end - t_start) + 's')
+logger.debug('Ran script in ' + str(t_end - t_start) + 's')
