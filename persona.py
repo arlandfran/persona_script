@@ -17,19 +17,23 @@ from selenium.webdriver.chrome.options import Options
 from tempfile import mkdtemp
 from timeit import default_timer as timer
 
+
 def check_platform():
     platform = sys.platform
     user = getuser()
     if platform == 'win32':
         profile_path = f'C:\\Users\\{user}\\AppData\\Local\\Google\\Chrome\\User Data'
         path = os.getcwd() + '\\chromedriver.exe'
-        desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        desktop = os.path.join(os.path.join(
+            os.environ['USERPROFILE']), 'Desktop')
         return profile_path, path, desktop
     else:
         profile_path = f'/Users/{user}/Library/Application Support/Google/Chrome/'
         path = os.getcwd() + '/chromedriver'
-        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        desktop = os.path.join(os.path.join(
+            os.path.expanduser('~')), 'Desktop')
         return profile_path, path, desktop
+
 
 def incr_month():
     month = today.strftime('%m')
@@ -38,10 +42,12 @@ def incr_month():
     month = str(x)
     return '/' + month
 
+
 def strip_chars(date):
     sep = '\n'
     integer = int(date.split(sep, 1)[0])
     return integer
+
 
 def scrape(month):
     logger.debug('Scraping data')
@@ -71,12 +77,14 @@ def scrape(month):
             x += 1
     return month
 
+
 def go_next():
     action = ActionChains(driver)
     action.click(
         driver.find_element_by_xpath('//*[@id="button-1029-btnIconEl"]'))
     action.perform()
     logger.debug('Accessing next page')
+
 
 def check_if_working():
     if driver.find_element_by_xpath(
@@ -90,6 +98,7 @@ def check_if_working():
         logger.debug('Data found')
         return True
 
+
 def export_data(month):
     cal = Calendar()
     year = int(today.strftime('%Y'))
@@ -99,8 +108,10 @@ def export_data(month):
     for item in hours:
         event = Event()
         event.add('summary', hours[i])
-        event.add('dtstart', datetime(year, month, int_days[i], int(start[i][:2]), int(start[i][3:])))
-        event.add('dtend', datetime(year, month, int_days[i], int(end[i][:2]), int(end[i][3:])))
+        event.add('dtstart', datetime(
+            year, month, int_days[i], int(start[i][:2]), int(start[i][3:])))
+        event.add('dtend', datetime(
+            year, month, int_days[i], int(end[i][:2]), int(end[i][3:])))
         event.add('location', location)
         cal.add_component(event)
         i += 1
@@ -125,9 +136,12 @@ csv = {'summary': []}
 
 profile_path, path, desktop = check_platform()
 options = Options()
+options.add_argument("--start-maximized")
 options.add_argument(f'window-size={screen_width}x{screen_height}')
-options.add_argument('user-data-dir=' + profile_path) # use custom chrome profile with 'keep signed in' on persona saved 
-options.headless = True
+# use custom chrome profile with 'keep signed in' on persona saved
+options.add_argument('user-data-dir=' + profile_path)
+options.headless = False
+
 with Chrome(path, options=options) as driver:
     t_start = timer()
     driver.implicitly_wait(2)
@@ -145,7 +159,16 @@ with Chrome(path, options=options) as driver:
         go_next()
         time.sleep(1)
         working = check_if_working()
-export_data(month)
+    export_data(month)
+    driver.get('https://www.outlook.com/calendar')
+    driver.find_element_by_xpath(
+        '//*[@id="app"]/div/div[2]/div[1]/div/div[1]/div[3]/div/div[1]/button[2]').click()
+    driver.find_element_by_xpath('//*[@id="Fromfile"]').click()
+    driver.find_element_by_xpath(
+        '//input[@type="file"]').send_keys(desktop + '\\persona_calendar.ics')
+    driver.find_element_by_xpath(
+        '//*[@id="id__212"]').click()
+    logger.debug('Calendar imported into Outlook')
 
 t_end = timer()
 logger.debug('\nRan script in ' + str(t_end - t_start) + 's')
