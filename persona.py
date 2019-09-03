@@ -1,3 +1,5 @@
+# TODO: implement automation of importing into outlook, gmail etc...
+
 import time
 import tkinter as tk
 import sys
@@ -6,7 +8,7 @@ from datetime import datetime, date
 from getpass import getuser
 from icalendar import Calendar, Event
 from loguru import logger
-from pandas import DataFrame
+# from pandas import DataFrame
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.action_chains import ActionChains
@@ -43,7 +45,6 @@ def strip_chars(date):
 def scrape(month):
     logger.debug('Scraping data')
     x = 2
-    # year = today.strftime('/%Y')
     while x < 9:
         try:
             shift_date = driver.find_element_by_xpath(
@@ -52,10 +53,8 @@ def scrape(month):
             shift_day = strip_chars(shift_date)
             if len(int_days) < 1 or shift_day > int_days[-1]:
                 int_days.append(shift_day)
-                # days.append(str(shift_day) + month + year)
             else:
                 month = incr_month()
-                # days.append(str(shift_day) + month + year)
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -68,7 +67,6 @@ def scrape(month):
             x += 1
         except NoSuchElementException:
             int_days.pop()
-            # days.pop()
             x += 1
     return month
 
@@ -92,57 +90,39 @@ def check_if_working():
         return True
 
 def export_data(month):
-    csv['summary'] = hours
-    # csv['Start Date'] = days
-    # csv['Start Time'] = start
-    # csv['End Date'] = days
-    # csv['End Time'] = end
-    df = DataFrame(csv)
-    # df.to_csv(desktop + '/rota.csv', index=None, header=True)
-    print(df)
-
+    # csv['summary'] = hours
+    # df = DataFrame(csv)
     cal = Calendar()
-    # month = int(today.strftime('%m'))
     year = int(today.strftime('%Y'))
     month = int(month.strip('/'))
-
-    data = list(df['summary'])
-
+    # summary = list(df['summary'])
+    location = 'Microsoft Store - Oxford Circus, 253-259 Regent St, Mayfair, London W1B 2ER, UK'
     i = 0
-    for column in data:
+    for item in hours:
         event = Event()
-        event.add('summary', df['summary'][i])
+        event.add('summary', hours[i])
         event.add('dtstart', datetime(year, month, int_days[i], int(start[i][:2]), int(start[i][3:])))
         event.add('dtend', datetime(year, month, int_days[i], int(end[i][:2]), int(end[i][3:])))
-        event.add('location', 'Microsoft Store - Oxford Circus, 253-259 Regent St, Mayfair, London W1B 2ER, UK')
+        event.add('location', location)
         cal.add_component(event)
         i += 1
 
     with open(os.path.join(desktop, 'persona_calendar.ics'), 'wb') as f:
         f.write(cal.to_ical())
+    logger.debug('Calendar exported to Desktop')
 
 
 root = tk.Tk()
-
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
 today = date.today()
 
 int_days = []
-
-# subject = []
-# days = []
 hours = []
 start = []
 end = []
-csv = {
-    'summary': [],
-    # 'Start Date': [],
-    # 'Start Time': [],
-    # 'End Date': [],
-    # 'End Time': [],
-}
+csv = {'summary': []}
 
 profile_path, path, desktop = check_platform()
 options = Options()
