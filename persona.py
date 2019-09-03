@@ -1,5 +1,3 @@
-# TODO: implement icalendar module to ouput .ics file instead of csv files
-
 import time
 import tkinter as tk
 import sys
@@ -45,19 +43,19 @@ def strip_chars(date):
 def scrape(month):
     logger.debug('Scraping data')
     x = 2
-    year = today.strftime('/%Y')
+    # year = today.strftime('/%Y')
     while x < 9:
         try:
             shift_date = driver.find_element_by_xpath(
                 f'//*[@id="headercontainer-1037-targetEl"]/div[{x}]/div/span/span'
             ).text
             shift_day = strip_chars(shift_date)
-            if len(days) < 1 or shift_day > int_days[-1]:
+            if len(int_days) < 1 or shift_day > int_days[-1]:
                 int_days.append(shift_day)
-                days.append(str(shift_day) + month + year)
+                # days.append(str(shift_day) + month + year)
             else:
                 month = incr_month()
-                days.append(str(shift_day) + month + year)
+                # days.append(str(shift_day) + month + year)
             shift_times = driver.find_element_by_xpath(
                 f'//*[@id="gridview-1046-record-scheduledHoursRow"]/td[{x}]/div/div/div/div'
             ).text
@@ -70,7 +68,7 @@ def scrape(month):
             x += 1
         except NoSuchElementException:
             int_days.pop()
-            days.pop()
+            # days.pop()
             x += 1
     return month
 
@@ -94,7 +92,7 @@ def check_if_working():
         return True
 
 def export_data(month):
-    csv['Subject'] = hours
+    csv['summary'] = hours
     # csv['Start Date'] = days
     # csv['Start Time'] = start
     # csv['End Date'] = days
@@ -108,12 +106,12 @@ def export_data(month):
     year = int(today.strftime('%Y'))
     month = int(month.strip('/'))
 
-    data = list(df['Subject'])
+    data = list(df['summary'])
 
     i = 0
     for column in data:
         event = Event()
-        event.add('summary', df['Subject'][i])
+        event.add('summary', df['summary'][i])
         event.add('dtstart', datetime(year, month, int_days[i], int(start[i][:2]), int(start[i][3:])))
         event.add('dtend', datetime(year, month, int_days[i], int(end[i][:2]), int(end[i][3:])))
         event.add('location', 'Microsoft Store - Oxford Circus, 253-259 Regent St, Mayfair, London W1B 2ER, UK')
@@ -133,13 +131,13 @@ today = date.today()
 
 int_days = []
 
-subject = []
-days = []
+# subject = []
+# days = []
 hours = []
 start = []
 end = []
 csv = {
-    'Subject': [],
+    'summary': [],
     # 'Start Date': [],
     # 'Start Time': [],
     # 'End Date': [],
