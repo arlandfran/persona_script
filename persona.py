@@ -1,4 +1,5 @@
 # TODO: implement automation of importing into outlook, gmail etc...
+# TODO: export .ics file to tempfiles so user never see's it
 
 import time
 import tkinter as tk
@@ -8,12 +9,12 @@ from datetime import datetime, date
 from getpass import getuser
 from icalendar import Calendar, Event
 from loguru import logger
-# from pandas import DataFrame
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from tempfile import mkdtemp
 from timeit import default_timer as timer
 
 def check_platform():
@@ -90,12 +91,9 @@ def check_if_working():
         return True
 
 def export_data(month):
-    # csv['summary'] = hours
-    # df = DataFrame(csv)
     cal = Calendar()
     year = int(today.strftime('%Y'))
     month = int(month.strip('/'))
-    # summary = list(df['summary'])
     location = 'Microsoft Store - Oxford Circus, 253-259 Regent St, Mayfair, London W1B 2ER, UK'
     i = 0
     for item in hours:
@@ -107,6 +105,7 @@ def export_data(month):
         cal.add_component(event)
         i += 1
 
+    temp_dir = mkdtemp()
     with open(os.path.join(desktop, 'persona_calendar.ics'), 'wb') as f:
         f.write(cal.to_ical())
     logger.debug('Calendar exported to Desktop')
