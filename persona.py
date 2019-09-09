@@ -1,6 +1,3 @@
-# TODO: implement automation of importing into outlook, gmail etc...
-# TODO: export .ics file to tempfiles so user never see's it
-
 import time
 import tkinter as tk
 import sys
