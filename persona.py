@@ -1,3 +1,4 @@
+import setuptools
 import time
 import tkinter as tk
 import sys
@@ -6,7 +7,7 @@ from datetime import datetime, date
 from getpass import getuser
 from icalendar import Calendar, Event
 from loguru import logger
-# from PyInquirer import prompt
+from PyInquirer import prompt
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.action_chains import ActionChains
@@ -146,28 +147,28 @@ def gcalendar_import(path):
 
 
 def import_prompt():
-    # question = [
-    #     {
-    #         'type': 'list',
-    #         'message': 'Select calendar:',
-    #         'name': 'Calendar',
-    #         'choices': [
-    #             {
-    #                 'name': 'Outlook'
-    #             },
-    #             {
-    #                 'name': 'Google Calendar'
-    #             },
-    #         ]
-    #     }
-    # ]
+    question = [
+        {
+            'type': 'list',
+            'message': 'Select calendar:',
+            'name': 'Calendar',
+            'choices': [
+                {
+                    'name': 'Outlook'
+                },
+                {
+                    'name': 'Google Calendar'
+                },
+            ]
+        }
+    ]
 
-    # answer = prompt(question)
-    # return answer
-
-    answer = input(
-        'Please select a calendar to import to: (Enter the corresponding number to select)\n1. Outlook\n2. Google Calendar\n\n')
+    answer = prompt(question)
     return answer
+
+    # answer = input(
+    #     'Please select a calendar to import to: (Enter the corresponding number to select)\n1. Outlook\n2. Google Calendar\n\n')
+    # return answer
 
 
 root = tk.Tk()
@@ -208,10 +209,12 @@ with Chrome(path, options=options) as driver:
         time.sleep(1)
         working = check_if_working()
     file_path = export_data(month)
-    if selection == '1':
+    if selection.get('Calendar') == 'Outlook':
         outlook_import(file_path)
-    elif selection == '2':
+    elif selection.get('Calendar') == 'Google Calendar':
         gcalendar_import(file_path)
 
 t_end = timer()
 logger.debug('Ran script in ' + str(t_end - t_start) + 's')
+
+close = input('Press any key to close')
